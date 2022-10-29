@@ -29,28 +29,52 @@ struct Args {
 }
 
 pub struct StretchedMasterKey {
-    key: [u8; 64],
+    enc_key: [u8; 32],
+    mac: [u8; 32],
 }
 
 impl StretchedMasterKey {
-    pub fn new(key: [u8; 64]) -> Self {
-        Self { key }
+    pub fn new(enc_key: [u8; 32], mac: [u8; 32]) -> Self {
+        Self { enc_key, mac }
+    }
+
+    pub fn from_creds(email: &str, password: &str) -> Self {
+        // Create 256 bit Master Key by using PBKDF2-SHA256 with 100,000 iterations
+        let mut master_key = [0u8; 32];
+        ring::pbkdf2::derive(
+            PBKDF2_ALG,
+            NonZeroU32::new(100_000).unwrap(),
+            email.as_bytes(),
+            password.as_bytes(),
+            &mut master_key,
+        );
+
+        // Create new HKDF Prk with existing MasterKey
+        let hkdf = ring::hkdf::Prk::new_less_safe(ring::hkdf::HKDF_SHA256, &master_key);
+
+        // Use HDKF to build key
+        let mut enc_key = [0u8; 32];
+        hkdf.expand(&[b"enc"], ring::hkdf::HKDF_SHA256)
+            .unwrap()
+            .fill(&mut enc_key)
+            .unwrap();
+
+        // Use HKDF to build mac
+        let mut mac = [0u8; 32];
+        hkdf.expand(&[b"mac"], ring::hkdf::HKDF_SHA256)
+            .unwrap()
+            .fill(&mut mac)
+            .unwrap();
+
+        Self { enc_key, mac }
     }
 
     pub fn enc_key_mut(&mut self) -> &mut [u8] {
-        self.key[..32].as_mut()
+        self.enc_key.as_mut()
     }
 
-    pub fn enc_key(&self) -> &[u8] {
-        &self.key[..32]
-    }
-
-    pub fn mac_key_mut(&mut self) -> &mut [u8] {
-        self.key[32..].as_mut()
-    }
-
-    pub fn mac_key(&self) -> &[u8] {
-        &self.key[32..]
+    pub fn mac_mut(&mut self) -> &mut [u8] {
+        self.mac.as_mut()
     }
 }
 
@@ -106,36 +130,12 @@ fn main() {
     println!("Email: {:?}", args.email);
     println!("Password: {:?}", args.password);
 
-    let mut master_key = [0u8; 32];
-    ring::pbkdf2::derive(
-        PBKDF2_ALG,
-        NonZeroU32::new(100_000).unwrap(),
-        args.email.as_bytes(),
-        args.password.as_bytes(),
-        &mut master_key,
-    );
-    println!("Master Key: {}", base64::encode(master_key));
-
-    let mut stretched_master_key = StretchedMasterKey::new([0u8; 64]);
-    let hkdf = ring::hkdf::Prk::new_less_safe(ring::hkdf::HKDF_SHA256, &master_key);
-    hkdf.expand(&[b"enc"], ring::hkdf::HKDF_SHA256)
-        .unwrap()
-        .fill(stretched_master_key.enc_key_mut())
-        .unwrap();
-
-    hkdf.expand(&[b"mac"], ring::hkdf::HKDF_SHA256)
-        .unwrap()
-        .fill(stretched_master_key.mac_key_mut())
-        .unwrap();
-    println!(
-        "Stretched Master Key: {}",
-        base64::encode(stretched_master_key.key)
-    );
+    let mut master_key = StretchedMasterKey::from_creds(&args.email, &args.password);
 
     let mut protected_symm_key =
         SymmetricKey::from_protected_symmetric_key(args.key.as_str()).unwrap();
 
-    let key = ring::hmac::Key::new(ring::hmac::HMAC_SHA256, stretched_master_key.mac_key_mut());
+    let key = ring::hmac::Key::new(ring::hmac::HMAC_SHA256, master_key.mac_mut());
     let data: Vec<_> = protected_symm_key
         .iv
         .iter()
@@ -152,7 +152,7 @@ fn main() {
     //             block_modes::block_padding::Pkcs7,
     // >::new_var(keys.enc_key(), &self.iv)
     let decrypted_symm_key = Aes256CbcDec::new(
-        stretched_master_key.enc_key().into(),
+        master_key.enc_key.as_ref().into(),
         protected_symm_key.iv.as_slice().into(),
     )
     .decrypt_padded_mut::<Pkcs7>(protected_symm_key.data.as_mut_slice())
