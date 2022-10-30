@@ -14,10 +14,13 @@ mod symmetric_key;
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Args {
+    /// Encrypt option, ignore to decrypt
     #[arg(long)]
     encrypt: bool,
+    /// Bitwarden email, used to generate Master Key
     #[arg(short, long)]
     email: String,
+    /// Bitwarden password, used to generate Master Key
     #[arg(short, long)]
     password: String,
     /// Protected Symmetric Key saved in Bitwarden database

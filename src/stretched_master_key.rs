@@ -8,10 +8,6 @@ pub struct StretchedMasterKey {
 }
 
 impl StretchedMasterKey {
-    pub fn new(enc_key: [u8; 32], mac: [u8; 32]) -> Self {
-        Self { enc_key, mac }
-    }
-
     pub fn from_creds(email: &str, password: &str) -> Self {
         // Create 256 bit Master Key by using PBKDF2-SHA256 with 100,000 iterations
         let mut master_key = [0u8; 32];
@@ -41,13 +37,5 @@ impl StretchedMasterKey {
             .unwrap();
 
         Self { enc_key, mac }
-    }
-
-    pub fn enc_key_mut(&mut self) -> &mut [u8] {
-        self.enc_key.as_mut()
-    }
-
-    pub fn mac_mut(&mut self) -> &mut [u8] {
-        self.mac.as_mut()
     }
 }
