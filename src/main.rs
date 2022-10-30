@@ -1,20 +1,15 @@
-use aes::cipher::{
-    block_padding::Pkcs7, generic_array::GenericArray, BlockDecryptMut, BlockEncryptMut, KeyIvInit,
-};
-use ring::{
-    hkdf::{self, HKDF_SHA512},
-    hmac,
-};
-
 use clap::Parser;
 
-use crate::{
-    encrypted_string::{DecryptedString, EncryptedString, SymmetricKey},
-    stretched_master_key::StretchedMasterKey,
-};
+use decrypted_string::DecryptedString;
+use encrypted_string::EncryptedString;
+use stretched_master_key::StretchedMasterKey;
+use symmetric_key::SymmetricKey;
 
+mod cipher_string;
+mod decrypted_string;
 mod encrypted_string;
 mod stretched_master_key;
+mod symmetric_key;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
