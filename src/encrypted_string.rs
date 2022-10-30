@@ -1,4 +1,5 @@
 use std::fmt;
+use std::str;
 
 use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
 
@@ -115,6 +116,10 @@ impl EncryptedString {
     pub fn from_encrypted_string(s: &str) -> Self {
         Self::parse_encrypted_string(s)
     }
+
+    pub fn to_decrypted_string(self, encryption_key: SymmetricKey) -> DecryptedString {
+        Self::decrypt(self, &encryption_key.key, &encryption_key.mac)
+    }
 }
 
 pub struct DecryptedString {
@@ -122,6 +127,12 @@ pub struct DecryptedString {
 }
 
 impl CipherString for DecryptedString {}
+
+impl fmt::Display for DecryptedString {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", str::from_utf8(self.data.as_slice()).unwrap())
+    }
+}
 
 impl DecryptedString {
     pub fn to_encrypted_string(self, encryption_key: SymmetricKey) -> EncryptedString {
