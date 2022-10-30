@@ -1,4 +1,5 @@
 use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
+use rand::RngCore;
 
 use crate::decrypted_string::DecryptedString;
 use crate::encrypted_string::EncryptedString;
@@ -39,7 +40,7 @@ pub trait CipherString {
 
     fn encrypt(decrypted_string: DecryptedString, encryption_key: SymmetricKey) -> EncryptedString {
         // Generate IV
-        let iv = base64::decode("jYvVBvakaKsYJiw0esB26Q==").unwrap();
+        let iv = random_iv();
 
         let mut buf = [0u8; 48];
         let enc_data =
@@ -91,4 +92,11 @@ pub trait CipherString {
 
         EncryptedString { iv, enc_data, mac }
     }
+}
+
+fn random_iv() -> Vec<u8> {
+    let mut iv = vec![0_u8; 16];
+    let mut rng = rand::thread_rng();
+    rng.fill_bytes(&mut iv);
+    iv
 }
