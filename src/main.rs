@@ -28,7 +28,7 @@ struct Args {
     key: String,
     /// Data to encrypt/decrypt
     #[arg(short, long)]
-    value: String,
+    input: String,
 }
 
 fn main() {
@@ -39,14 +39,14 @@ fn main() {
 
     if args.encrypt {
         let decrypted_string = DecryptedString {
-            data: args.value.as_bytes().to_vec(),
+            data: args.input.as_bytes().to_vec(),
         };
 
         let encrypted_string = decrypted_string.to_encrypted_string(symmetric_key);
 
         println!("{}", encrypted_string);
     } else {
-        let encrypted_string = EncryptedString::from_encrypted_string(args.value.as_str());
+        let encrypted_string = EncryptedString::from_encrypted_string(args.input.as_str());
 
         let decrypted_string = encrypted_string.to_decrypted_string(symmetric_key);
 
