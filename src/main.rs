@@ -23,7 +23,7 @@ struct Args {
     /// Protected Symmetric Key saved in Bitwarden database
     #[arg(short, long)]
     key: String,
-    // String to encrypt
+    /// Data to encrypt/decrypt
     #[arg(short, long)]
     value: String,
 }
