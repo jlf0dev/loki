@@ -1,6 +1,6 @@
 use std::{fmt, str};
 
-use crate::cipher_string::CipherString;
+use crate::cipher_string::Encrypt;
 use crate::encrypted_string::EncryptedString;
 use crate::symmetric_key::SymmetricKey;
 
@@ -19,7 +19,7 @@ impl DecryptedString {
     }
 }
 
-impl CipherString for DecryptedString {}
+impl Encrypt for DecryptedString {}
 
 impl fmt::Display for DecryptedString {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

@@ -8,7 +8,7 @@ use crate::symmetric_key::SymmetricKey;
 type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
 type Aes256CbcEnc = cbc::Encryptor<aes::Aes256>;
 
-pub trait CipherString {
+pub trait Decrypt {
     fn decrypt(
         mut encrypted_string: EncryptedString,
         encryption_key: &[u8],
@@ -37,7 +37,9 @@ pub trait CipherString {
 
         DecryptedString { data }
     }
+}
 
+pub trait Encrypt {
     fn encrypt(decrypted_string: DecryptedString, encryption_key: SymmetricKey) -> EncryptedString {
         // Generate IV
         let iv = random_iv();
