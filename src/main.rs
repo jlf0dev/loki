@@ -38,18 +38,15 @@ fn main() {
     let symmetric_key = SymmetricKey::from_encrypted_string(args.key.as_str(), master_key);
 
     if args.encrypt {
-        let decrypted_string = DecryptedString {
-            data: args.input.as_bytes().to_vec(),
-        };
-
-        let encrypted_string = decrypted_string.to_encrypted_string(symmetric_key);
-
-        println!("{}", encrypted_string);
+        println!(
+            "{}",
+            DecryptedString::from_string(args.input.as_str()).to_encrypted_string(symmetric_key)
+        );
     } else {
-        let encrypted_string = EncryptedString::from_encrypted_string(args.input.as_str());
-
-        let decrypted_string = encrypted_string.to_decrypted_string(symmetric_key);
-
-        println!("{}", decrypted_string);
+        println!(
+            "{}",
+            EncryptedString::from_encrypted_string(args.input.as_str())
+                .to_decrypted_string(symmetric_key)
+        );
     }
 }
